@@ -21,7 +21,6 @@ export const Overlay: React.FC<OverlayProps> = ({
   isLightsOn,
   onPowerClick
 }) => {
-  const [color, setColor] = React.useState('#ff0000');
   const [isMuted, setIsMuted] = useState(false);
   
   // Power Button State
@@ -35,7 +34,12 @@ export const Overlay: React.FC<OverlayProps> = ({
   const handleStart = () => {
     const randomId = Math.floor(1000 + Math.random() * 9000);
     const generatedName = `Guest ${randomId}`;
-    onStart(generatedName, color);
+    
+    // Auto-assign festive color
+    const festiveColors = ['#ff0000', '#00ff00', '#ffff00', '#00ffff', '#ff00ff', '#ffaa00'];
+    const randomColor = festiveColors[Math.floor(Math.random() * festiveColors.length)];
+
+    onStart(generatedName, randomColor);
     audioManager.startAmbience();
   };
 
@@ -63,6 +67,7 @@ export const Overlay: React.FC<OverlayProps> = ({
   if (gameState === 'LOBBY') {
     return (
       <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 text-white font-[Cinzel]">
+        {/* Vietnamese Flag Badge */}
         <div className="absolute top-8 right-8 group flex flex-col items-center gap-1 cursor-help">
              <div className="w-16 h-10 bg-red-600 relative rounded-sm shadow-lg overflow-hidden border border-yellow-500/30">
                 <div className="absolute inset-0 flex items-center justify-center text-yellow-400 text-3xl" style={{ transform: 'translateY(-2px)' }}>
@@ -72,31 +77,23 @@ export const Overlay: React.FC<OverlayProps> = ({
              <span className="text-xs text-yellow-500/80 font-sans tracking-widest">VIETNAM</span>
         </div>
 
-        <div className="max-w-md w-full bg-[#1a1a2e] border border-white/10 p-8 rounded-xl shadow-2xl backdrop-blur-md">
-          <h1 className="text-4xl text-center mb-2 text-yellow-400">Cinematic Tree</h1>
-          <p className="text-center text-gray-400 mb-8 font-[Lato]">Join the collaborative decoration experience.</p>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm mb-1 font-[Lato]">Choose Your Spirit Color</label>
-              <div className="flex items-center gap-4 bg-black/40 p-2 rounded border border-white/10">
-                 <input 
-                    type="color" 
-                    value={color} 
-                    onChange={(e) => setColor(e.target.value)}
-                    className="w-12 h-12 bg-transparent cursor-pointer rounded overflow-hidden border-none"
-                  />
-                  <span className="text-sm text-gray-400">Pick a color for your presence</span>
-              </div>
+        <div className="flex flex-col items-center justify-center space-y-8 animate-fade-in-up">
+            <div className="text-center space-y-4">
+                <h1 className="text-6xl text-yellow-400 drop-shadow-[0_0_15px_rgba(255,215,0,0.5)] tracking-wider">
+                    SNOW GLOBE LIVE
+                </h1>
+                <p className="text-gray-400 text-lg font-[Lato] tracking-widest uppercase">
+                    A Cinematic Holiday Experience
+                </p>
             </div>
-            
+
             <button 
               onClick={handleStart}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded transition duration-200 mt-4 text-lg"
+              className="group relative px-12 py-4 bg-transparent border border-yellow-500/50 text-yellow-400 font-bold text-xl tracking-[0.2em] transition-all duration-500 hover:bg-yellow-500/10 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]"
             >
-              Play
+              <span className="relative z-10">ENTER SNOW GLOBE</span>
+              <div className="absolute inset-0 bg-yellow-400/5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
             </button>
-          </div>
         </div>
       </div>
     );
