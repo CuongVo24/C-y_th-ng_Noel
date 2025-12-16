@@ -5,49 +5,53 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Gift } from '../types';
 import { getSnowHeight } from '../utils/snowMath';
 
-// Static mock gifts (Y position will be ignored and recalculated)
+// Static mock gifts with Gen Z Vietnamese Slang
 const STATIC_GIFTS_DATA: Gift[] = [
-    { id: 'g1', position: [1.5, 0, 1.5], color: '#d32f2f', message: 'Giáng sinh an lành! Merry Christmas!', sender: 'Mom', opened: false },
-    { id: 'g2', position: [-1.2, 0, 1], color: '#1976d2', message: 'Chúc bạn một mùa đông ấm áp bên gia đình.', sender: 'Dev', opened: false },
-    { id: 'g3', position: [0.5, 0, -1.5], color: '#388e3c', message: 'Peace and Joy to the world.', sender: 'Santa', opened: false },
-    { id: 'g4', position: [2.5, 0, 0.5], color: '#ffeb3b', message: 'Năm mới phát tài phát lộc!', sender: 'Friend', opened: false },
-    { id: 'g5', position: [-2, 0, -2], color: '#9c27b0', message: 'Happy Holidays!', sender: 'Secret Santa', opened: false },
-    { id: 'g6', position: [3, 0, -1], color: '#00bcd4', message: 'Chúc mừng giáng sinh!', sender: 'Bro', opened: false },
-    { id: 'g7', position: [-3.5, 0, 1.5], color: '#ff5722', message: 'Mong mọi điều ước của bạn thành hiện thực.', sender: 'Sis', opened: false },
-    { id: 'g8', position: [0, 0, 3], color: '#e91e63', message: 'Love and Happiness.', sender: 'Dad', opened: false },
-    { id: 'g9', position: [-1.5, 0, 2.5], color: '#795548', message: 'Giáng sinh vui vẻ nhé!', sender: 'Neighbor', opened: false },
-    { id: 'g10', position: [2, 0, 2.5], color: '#607d8b', message: 'Merry Xmas!', sender: 'Colleague', opened: false },
+    { id: 'g1', position: [1.5, 0, 1.5], color: '#d32f2f', message: 'Noel này tuy lạnh nhưng không bằng trái tim crush lạnh lùng với tui 🥶. Chúc bạn sớm thoát kiếp F.A!', sender: 'Hội Người Cũ', opened: false },
+    { id: 'g2', position: [-1.2, 0, 1], color: '#1976d2', message: 'Chúc đằng ấy Giáng Sinh slay ngất ngây, tiền về đầy túi, tình đầy tim! 10 điểm không có nhưng! 💅✨', sender: 'Bestie', opened: false },
+    { id: 'g3', position: [0.5, 0, -1.5], color: '#388e3c', message: 'Cầu mong năm mới không deadline, chỉ có headline là "Trúng số độc đắc" 🤑. Gét gô!', sender: 'Vũ trụ', opened: false },
+    { id: 'g4', position: [2.5, 0, 0.5], color: '#ffeb3b', message: 'Flex nhẹ cái giáng sinh ấm áp. Chúc bạn visual thăng hạng, tài khoản thêm nhiều số 0! 👌', sender: 'Fan cứng', opened: false },
+    { id: 'g5', position: [-2, 0, -2], color: '#9c27b0', message: 'Noel vui vẻ không quạu, lì xì ting ting là hết sầu! Mãi keo lì tái châu nha! 🥂', sender: 'Hội chị em', opened: false },
+    { id: 'g6', position: [3, 0, -1], color: '#00bcd4', message: 'Đừng để Noel này giống Noel xưa, vẫn đi xe máy, vẫn chưa có bồ... à mà thôi chúc vui là chính! 🤣', sender: 'Người lạ', opened: false },
+    { id: 'g7', position: [-3.5, 0, 1.5], color: '#ff5722', message: 'Chúc bạn sang năm mới công việc "trôi" như người yêu cũ, tiền vào như nước sông Đà! 🌊', sender: 'Đồng nghiệp', opened: false },
+    { id: 'g8', position: [0, 0, 3], color: '#e91e63', message: 'Giáng sinh này, chúc bạn tìm được "chân ái" chứ không phải "chân gà" nha 🍗❤️. Yêu thương!', sender: 'Secret Santa', opened: false },
+    { id: 'g9', position: [-1.5, 0, 2.5], color: '#795548', message: 'Hết nước chấm! Chúc mừng Giáng Sinh! Ai có đôi thì hạnh phúc, ai cô đơn thì... rủ tui đi nhậu! 🍻', sender: 'Bợm nhậu', opened: false },
+    { id: 'g10', position: [2, 0, 2.5], color: '#607d8b', message: 'Tầm này thì còn liêm sỉ gì nữa, chúc bạn mau giàu ú ụ để bao tui đi ăn! Chốt đơn! 🔨', sender: 'Đứa bạn thân', opened: false },
 ];
 
-// --- 1. ORGANIC SNOW CAP (Thin Crust, No Bow) ---
+// --- 1. ORGANIC SNOW CAP (Soft Pillow Style) ---
 const OrganicSnowCap = ({ size }: { size: number }) => {
   const geometry = useMemo(() => {
-    // Plane covering the lid
-    const geo = new THREE.PlaneGeometry(size, size, 32, 32);
+    // High resolution plane for smooth curvature
+    const geo = new THREE.PlaneGeometry(size, size, 64, 64);
     const posAttribute = geo.attributes.position;
     const vertex = new THREE.Vector3();
     
+    // Config
+    const maxDist = size / 2;
+    const padding = 0.05; // Distance from edge where tapering starts
+
     for (let i = 0; i < posAttribute.count; i++) {
         vertex.fromBufferAttribute(posAttribute, i);
         
         // Distance from center
-        const dist = Math.sqrt(vertex.x * vertex.x + vertex.y * vertex.y); // Plane lies on XY before rotation
-        const maxDist = size / 2;
+        const dist = Math.sqrt(vertex.x * vertex.x + vertex.y * vertex.y);
+        
+        // 1. Base Height & Noise
+        const baseHeight = 0.025; 
+        const noise = (Math.random() - 0.5) * 0.008; // Subtle surface texture
 
-        // Base Height: Very Thin (0.02)
-        let h = 0.02;
+        // 2. Soft Pillow Taper (Smoothstep)
+        // Returns 1.0 at center, drops to 0.0 as it reaches the edge
+        // smoothstep(edge, start, current)
+        const taperFactor = THREE.MathUtils.smoothstep(maxDist, maxDist - padding, dist);
 
-        // RUGGED NOISE: High frequency, low amplitude
-        h += (Math.random() - 0.5) * 0.015;
-
-        // EDGE DROP-OFF:
-        if (dist > maxDist * 0.95) {
-             const t = (dist - maxDist * 0.95) / (maxDist * 0.05);
-             h *= (1.0 - t); // Fade height to 0
-        }
-
-        // Clamp
-        h = Math.max(0.002, h); 
+        // Apply Taper
+        // This ensures edges adhere to the box, avoiding the "blocky" look
+        let h = (baseHeight + noise) * taperFactor;
+        
+        // Ensure strictly non-negative
+        h = Math.max(0, h);
 
         posAttribute.setZ(i, h); 
     }
@@ -60,15 +64,15 @@ const OrganicSnowCap = ({ size }: { size: number }) => {
     <mesh 
       geometry={geometry} 
       rotation={[-Math.PI / 2, 0, 0]} 
-      // Embed slightly (-0.005) into the lid to prevent floating/gaps
-      position={[0, -0.005, 0]} 
+      // Positioned slightly up so the edges meet the lid surface, center bulges up
+      position={[0, 0.001, 0]} 
       castShadow 
       receiveShadow
     >
       <meshStandardMaterial 
         color="#ffffff" 
-        roughness={0.9} 
-        metalness={0.1}
+        roughness={1.0} // Fully matte snow
+        metalness={0.0}
       />
     </mesh>
   );
@@ -83,21 +87,24 @@ interface GiftBoxProps {
 const HollowGiftBox: React.FC<GiftBoxProps> = ({ gift, onOpen }) => {
   const [active, setActive] = useState(false);
   
+  // CONSTANTS
   const SIZE = 0.5;
-  const WALL = 0.02; // Wall thickness
+  const WALL = 0.02; 
   const HALF = SIZE / 2;
-  const LID_H = 0.04; // Lid Height
+  const LID_H = 0.05; 
 
   const [rotation] = useState(() => [0, Math.random() * Math.PI, 0] as [number, number, number]);
 
-  // BODY GEOMETRY (5 Sides)
+  // --- GEOMETRIES ---
+
+  // Body: Floor + 4 Walls
   const bodyGeo = useMemo(() => {
     const geos = [];
     // Floor
     const floor = new THREE.BoxGeometry(SIZE, WALL, SIZE);
     floor.translate(0, -HALF + WALL/2, 0);
     geos.push(floor);
-    // Walls (L, R, F, B)
+    // Walls
     const w1 = new THREE.BoxGeometry(WALL, SIZE, SIZE);
     w1.translate(-HALF + WALL/2, 0, 0);
     geos.push(w1);
@@ -116,22 +123,18 @@ const HollowGiftBox: React.FC<GiftBoxProps> = ({ gift, onOpen }) => {
     return merged;
   }, [SIZE, WALL, HALF]);
 
-  // LID RIM GEOMETRY (4 Sides ONLY, NO Top Face)
+  // Lid Frame (Sides)
   const lidRimGeo = useMemo(() => {
     const geos = [];
-    // Front Rim
     const f = new THREE.BoxGeometry(SIZE, LID_H, WALL);
     f.translate(0, 0, SIZE/2 - WALL/2);
     geos.push(f);
-    // Back Rim
     const b = new THREE.BoxGeometry(SIZE, LID_H, WALL);
     b.translate(0, 0, -SIZE/2 + WALL/2);
     geos.push(b);
-    // Left Rim
     const l = new THREE.BoxGeometry(WALL, LID_H, SIZE - 2*WALL);
     l.translate(-SIZE/2 + WALL/2, 0, 0);
     geos.push(l);
-    // Right Rim
     const r = new THREE.BoxGeometry(WALL, LID_H, SIZE - 2*WALL);
     r.translate(SIZE/2 - WALL/2, 0, 0);
     geos.push(r);
@@ -160,34 +163,37 @@ const HollowGiftBox: React.FC<GiftBoxProps> = ({ gift, onOpen }) => {
   return (
     <group position={gift.position} rotation={rotation} onClick={handleClick}>
       
-      {/* 1. Main Box Body */}
+      {/* --- 1. MAIN BOX BODY --- */}
       <group position={[0, HALF, 0]}>
+         {/* Container */}
          <mesh geometry={bodyGeo} material={boxMat} castShadow receiveShadow />
-         
-         {/* Ribbons as BoxGeometry - Solid with thickness to avoid glitches */}
-         <mesh position={[0, 0, HALF + 0.005]}>
-             <boxGeometry args={[0.08, SIZE, 0.015]} /> 
-             <meshStandardMaterial color="#FFF" />
-         </mesh>
-         <mesh position={[0, 0, -HALF - 0.005]}>
-             <boxGeometry args={[0.08, SIZE, 0.015]} />
-             <meshStandardMaterial color="#FFF" />
-         </mesh>
+         {/* NO RIBBONS HERE */}
       </group>
 
-      {/* 2. Animated Lid Group */}
+      {/* --- 2. ANIMATED LID GROUP --- */}
       {/* Pivot point at the top-back edge of the box */}
       {/* @ts-ignore */}
       <animated.group position={[0, SIZE, -HALF]} rotation-x={lidRot}>
           {/* Shift back to center relative to pivot */}
           <group position={[0, 0, HALF]}>
              
-             {/* A. The Lid Rim (Cardboard) */}
+             {/* A. The Lid Rims (Sides) */}
              <mesh position={[0, LID_H/2, 0]} geometry={lidRimGeo} material={boxMat} castShadow receiveShadow />
 
-             {/* B. The Snow Cap - Embedded into lid, NO BOW */}
-             <group position={[0, LID_H * 0.4, 0]}>
-                 <OrganicSnowCap size={SIZE} />
+             {/* B. The Lid Top Plate (SOLID Box) */}
+             {/* Sits ON TOP of the rims. */}
+             <mesh position={[0, LID_H + WALL/2, 0]} castShadow receiveShadow>
+                 <boxGeometry args={[SIZE, WALL, SIZE]} />
+                 <primitive object={boxMat} />
+             </mesh>
+
+             {/* NO RIBBONS HERE */}
+
+             {/* D. The Snow Cap - Sits directly on top of the lid plate */}
+             {/* Total Y = LID_H + WALL + epsilon */}
+             <group position={[0, LID_H + WALL + 0.002, 0]}>
+                 <OrganicSnowCap size={SIZE * 0.95} /> 
+                 {/* Scaled slightly down to not overhang the box edge strangely */}
              </group>
 
           </group>

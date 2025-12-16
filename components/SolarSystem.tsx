@@ -65,8 +65,9 @@ const Planet: React.FC<{ data: PlanetData }> = ({ data }) => {
 const Sun = () => {
     // Position matches the DirectionalLight in SceneContainer
     // Scaled up geometry (was 8, now 14) and boosted brightness
+    // UPDATED: Scaled by 1.5x as requested
     return (
-        <mesh position={[50, 20, 50]}>
+        <mesh position={[50, 20, 50]} scale={1.5}>
             <sphereGeometry args={[14, 64, 64]} />
             <meshStandardMaterial 
                 color="#FDB813" 

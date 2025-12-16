@@ -12,11 +12,9 @@ import { InventoryBar } from './components/InventoryBar';
 import { SceneContainer } from './components/Scene/SceneContainer';
 
 // --- MAIN LAYOUT COMPONENT ---
-// Separated to use the GameContext inside
 const GameLayout = () => {
   const { state, dispatch } = useGame();
   
-  // Local UI State (Doesn't need to be in Global Context)
   const [selectedType, setSelectedType] = useState<DecorationType>('orb');
   const [pendingPosition, setPendingPosition] = useState<THREE.Vector3 | null>(null);
   const [decorationMessage, setDecorationMessage] = useState('');
@@ -32,11 +30,33 @@ const GameLayout = () => {
     dispatch({ type: 'TOGGLE_LIGHTS' });
   };
 
-  const handleDecorateStart = useCallback((point: THREE.Vector3) => {
+  // Updated to handle both Click (Modal) and Drop (Instant)
+  const handleDecorateStart = useCallback((point: THREE.Vector3, dropType?: DecorationType) => {
     if (!state.isLit) return; 
-    setPendingPosition(point);
-    setDecorationMessage(''); 
-  }, [state.isLit]);
+
+    if (dropType) {
+        // INSTANT PLACEMENT FOR DRAG & DROP
+        const randomMsgs = ["Happy Holidays!", "Merry Christmas!", "Joy to the World", "Peace & Love", "Warm Wishes"];
+        const msg = randomMsgs[Math.floor(Math.random() * randomMsgs.length)];
+
+        const newDec: Decoration = {
+            id: uuidv4(),
+            position: [point.x, point.y, point.z],
+            type: dropType,
+            color: state.userColor,
+            sender: state.userName,
+            message: msg,
+            timestamp: Date.now()
+        };
+        
+        dispatch({ type: 'ADD_DECORATION', payload: newDec });
+        audioManager.playChime();
+    } else {
+        // CLICK INTERACTION -> OPEN MODAL
+        setPendingPosition(point);
+        setDecorationMessage(''); 
+    }
+  }, [state.isLit, state.userColor, state.userName, dispatch]);
 
   const handleConfirmDecoration = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,12 +103,12 @@ const GameLayout = () => {
           </button>
       )}
 
-      {/* Inventory Bar */}
+      {/* Inventory Bar (Draggable) */}
       {state.gameState === 'DECORATING' && state.isLit && (
           <InventoryBar selectedType={selectedType} onSelect={setSelectedType} />
       )}
 
-      {/* Decoration Modal */}
+      {/* Decoration Modal (For Clicks) */}
       {pendingPosition && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
               <form onSubmit={handleConfirmDecoration} className="bg-[#1a1a2e] p-6 rounded-lg border border-white/20 shadow-xl w-80">

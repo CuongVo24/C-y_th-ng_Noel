@@ -14,13 +14,31 @@ export const InventoryBar: React.FC<InventoryBarProps> = ({ selectedType, onSele
     { type: 'stocking', label: 'Stocking', icon: '🧦' },
   ];
 
+  const handleDragStart = (e: React.DragEvent, type: DecorationType) => {
+      // Set the drag data
+      e.dataTransfer.setData('decorationType', type);
+      e.dataTransfer.effectAllowed = 'copy';
+      
+      // Create a ghost image if needed, but browser default is usually fine
+      const ghost = document.createElement('div');
+      ghost.innerText = items.find(i => i.type === type)?.icon || '🎁';
+      ghost.style.fontSize = '30px';
+      ghost.style.position = 'absolute';
+      ghost.style.top = '-1000px';
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 0, 0);
+      setTimeout(() => document.body.removeChild(ghost), 0);
+  };
+
   return (
     <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 border border-white/20 flex gap-4 pointer-events-auto z-50">
       {items.map((item) => (
         <button
           key={item.type}
           onClick={() => onSelect(item.type)}
-          className={`flex flex-col items-center gap-1 transition-all duration-200 ${
+          draggable
+          onDragStart={(e) => handleDragStart(e, item.type)}
+          className={`flex flex-col items-center gap-1 transition-all duration-200 cursor-grab active:cursor-grabbing ${
             selectedType === item.type 
               ? 'scale-110 text-yellow-400' 
               : 'text-white/70 hover:text-white hover:scale-105'
