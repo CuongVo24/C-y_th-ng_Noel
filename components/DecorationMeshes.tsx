@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useLayoutEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,6 +8,30 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
   const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   const [born, setBorn] = useState(0);
+
+  // Calculate alignment quaternion based on the normal vector
+  const orientation = useMemo(() => {
+    // Robust check for data.normal to prevent spread errors
+    const hasNormal = data.normal && Array.isArray(data.normal) && data.normal.length === 3;
+    const normal = hasNormal ? new THREE.Vector3(...data.normal!) : new THREE.Vector3(0, 1, 0);
+    
+    // CHANGED: Use (0,0,1) [Z-Axis] as the reference "Forward" vector.
+    // This implies that the decoration's Z-axis will point OUT from the tree.
+    const forward = new THREE.Vector3(0, 0, 1);
+    
+    const alignQuat = new THREE.Quaternion().setFromUnitVectors(forward, normal);
+    
+    // Add random spin around the normal axis for variety
+    const randomSpin = new THREE.Quaternion().setFromAxisAngle(normal, Math.random() * Math.PI * 2);
+    return alignQuat.multiply(randomSpin);
+  }, [data.normal]);
+
+  // Apply quaternion manually to avoid "read-only property" assignment errors in R3F
+  useLayoutEffect(() => {
+    if (groupRef.current) {
+        groupRef.current.quaternion.copy(orientation);
+    }
+  }, [orientation]);
 
   // Memoize geometry for the star to improve performance
   const starGeometry = useMemo(() => {
@@ -39,18 +63,21 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
     }
     // Hover idle animation
     if (groupRef.current && hovered) {
-        groupRef.current.rotation.y += 0.02;
+        // Rotate around local Z (which is now aligned to normal)
+        groupRef.current.rotateZ(0.02);
     }
   });
 
   // --- REALISTIC GEOMETRY RENDERERS ---
+  // Added Z-Offsets (position={[0,0,X]}) to shift anchor point to the back of the object
 
   const renderContent = () => {
     switch (data.type) {
         case 'star':
             // BRIGHT STAR: 5-pointed Golden/Yellow Star
+            // Offset Z +0.1 to clear tree surface
             return (
-                <group scale={1.5} rotation={[0, 0, 0]}>
+                <group position={[0, 0, 0.1]} scale={1.5}>
                     <mesh geometry={starGeometry} castShadow>
                         <meshStandardMaterial 
                             color="#FFD700" 
@@ -65,8 +92,10 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
 
         case 'candy':
             // CANDY CANE: Red with Pink/White stripes
+            // Offset Z +0.1
+            // Note: Rotation logic simplified as Z is now Normal.
             return (
-                <group rotation={[Math.PI, 0, 0]} scale={0.8}>
+                <group position={[0, 0, 0.1]} rotation={[0, 0, 0]} scale={0.8}>
                     {/* Main Stick - Red */}
                     <mesh position={[0, -0.1, 0]} castShadow>
                         <cylinderGeometry args={[0.03, 0.03, 0.4]} />
@@ -90,8 +119,9 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
 
         case 'stocking':
              // STOCKING: Blue body with Yellow/Orange accents
+             // Offset Z +0.1
              return (
-                 <group scale={0.7} rotation={[0, -Math.PI/2, 0]}>
+                 <group position={[0, 0, 0.1]} scale={0.7} rotation={[0, 0, 0]}>
                     {/* Leg (Blue) */}
                     <mesh position={[0, 0.15, 0]} castShadow>
                         <cylinderGeometry args={[0.12, 0.1, 0.35]} />
@@ -123,8 +153,9 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
         case 'orb':
         default:
             // MAGIC ORB: Purple/Violet with Emissive Glow
+            // Offset Z +0.2 (Radius is 0.15, so 0.2 ensures back touches surface)
             return (
-                <group>
+                <group position={[0, 0, 0.2]}>
                     <mesh castShadow>
                         <sphereGeometry args={[0.15, 32, 32]} />
                         <meshStandardMaterial 
@@ -154,7 +185,7 @@ export const DecorationMesh: React.FC<{ data: Decoration; isLit: boolean }> = ({
     <group 
         ref={groupRef}
         position={data.position} 
-        rotation={[0, Math.random() * Math.PI, 0]}
+        // quaternion assigned via useLayoutEffect above
     >
         <group
             onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}

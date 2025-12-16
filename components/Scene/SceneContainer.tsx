@@ -64,7 +64,7 @@ const DropRaycaster = ({
     onDecorate 
 }: { 
     dropEvent: { x: number, y: number, type: DecorationType } | null,
-    onDecorate: (pos: THREE.Vector3, type: DecorationType) => void
+    onDecorate: (pos: THREE.Vector3, normal: THREE.Vector3, type: DecorationType) => void
 }) => {
     const { camera, scene, raycaster } = useThree();
 
@@ -91,10 +91,14 @@ const DropRaycaster = ({
             // Find first intersection that is reasonably close to center (The Tree)
             const validHit = intersects.find(hit => hit.distance < 8 && hit.object.type === 'Mesh');
 
-            if (validHit) {
-                // Apply a small normal offset so it sits ON the surface
-                const point = validHit.point.clone().add(validHit.face?.normal.clone().multiplyScalar(0.1) || new THREE.Vector3(0,0,0));
-                onDecorate(point, dropEvent.type);
+            if (validHit && validHit.face && validHit.face.normal) {
+                // Calculate Normal in World Space
+                const normal = validHit.face.normal.clone().transformDirection(validHit.object.matrixWorld).normalize();
+                
+                // Calculate Point with Offset (0.4)
+                const point = validHit.point.clone().add(normal.clone().multiplyScalar(0.4));
+                
+                onDecorate(point, normal, dropEvent.type);
             }
         }
 
@@ -167,7 +171,7 @@ const WispField = ({ count }: { count: number }) => {
 };
 
 interface SceneContainerProps {
-  onDecorateStart: (point: THREE.Vector3, type?: DecorationType) => void;
+  onDecorateStart: (point: THREE.Vector3, normal?: THREE.Vector3, type?: DecorationType) => void;
   onGiftOpen: (msg: string) => void;
   onAirdropStart: () => void;
   airdropActive: boolean;

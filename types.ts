@@ -10,6 +10,7 @@ export type DecorationType = 'orb' | 'star' | 'candy' | 'stocking';
 export interface Decoration {
   id: string;
   position: [number, number, number];
+  normal?: [number, number, number]; // Added for surface alignment
   type: DecorationType;
   color: string;
   sender: string;

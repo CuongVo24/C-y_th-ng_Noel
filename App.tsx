@@ -17,6 +17,7 @@ const GameLayout = () => {
   
   const [selectedType, setSelectedType] = useState<DecorationType>('orb');
   const [pendingPosition, setPendingPosition] = useState<THREE.Vector3 | null>(null);
+  const [pendingNormal, setPendingNormal] = useState<THREE.Vector3 | null>(null);
   const [decorationMessage, setDecorationMessage] = useState('');
   const [activeGiftMsg, setActiveGiftMsg] = useState<string | null>(null);
   const [airdropActive, setAirdropActive] = useState(false);
@@ -30,8 +31,8 @@ const GameLayout = () => {
     dispatch({ type: 'TOGGLE_LIGHTS' });
   };
 
-  // Updated to handle both Click (Modal) and Drop (Instant)
-  const handleDecorateStart = useCallback((point: THREE.Vector3, dropType?: DecorationType) => {
+  // Updated to handle normal vector for alignment
+  const handleDecorateStart = useCallback((point: THREE.Vector3, normal?: THREE.Vector3, dropType?: DecorationType) => {
     if (!state.isLit) return; 
 
     if (dropType) {
@@ -42,6 +43,7 @@ const GameLayout = () => {
         const newDec: Decoration = {
             id: uuidv4(),
             position: [point.x, point.y, point.z],
+            normal: normal ? [normal.x, normal.y, normal.z] : [0, 1, 0],
             type: dropType,
             color: state.userColor,
             sender: state.userName,
@@ -54,6 +56,7 @@ const GameLayout = () => {
     } else {
         // CLICK INTERACTION -> OPEN MODAL
         setPendingPosition(point);
+        setPendingNormal(normal || new THREE.Vector3(0, 1, 0));
         setDecorationMessage(''); 
     }
   }, [state.isLit, state.userColor, state.userName, dispatch]);
@@ -65,6 +68,7 @@ const GameLayout = () => {
     const newDec: Decoration = {
         id: uuidv4(),
         position: [pendingPosition.x, pendingPosition.y, pendingPosition.z],
+        normal: pendingNormal ? [pendingNormal.x, pendingNormal.y, pendingNormal.z] : [0, 1, 0],
         type: selectedType,
         color: state.userColor,
         sender: state.userName,
@@ -75,6 +79,7 @@ const GameLayout = () => {
     dispatch({ type: 'ADD_DECORATION', payload: newDec });
     audioManager.playChime(); 
     setPendingPosition(null);
+    setPendingNormal(null);
   };
 
   const bgColor = state.isLit ? '#050510' : '#020205';
@@ -125,7 +130,7 @@ const GameLayout = () => {
                   <div className="flex gap-2">
                       <button 
                         type="button" 
-                        onClick={() => setPendingPosition(null)}
+                        onClick={() => { setPendingPosition(null); setPendingNormal(null); }}
                         className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded"
                       >
                           Cancel

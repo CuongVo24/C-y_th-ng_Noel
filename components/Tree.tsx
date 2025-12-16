@@ -1,12 +1,12 @@
 import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Decoration } from '../types';
+import { Decoration, DecorationType } from '../types';
 import { DecorationMesh } from './DecorationMeshes';
 
 interface TreeProps {
   snowAmount: number;
-  onDecorateStart: (point: THREE.Vector3) => void;
+  onDecorateStart: (point: THREE.Vector3, normal?: THREE.Vector3, type?: DecorationType) => void;
   decorations: Decoration[];
   isLit: boolean;
   onStarClick: (position: THREE.Vector3) => void;
@@ -89,7 +89,8 @@ const TreeSnowCap = ({ args, scale, snowAmount }: { args: [number, number, numbe
 
 const TreeLayer = ({ position, scale, snowAmount }: { position: [number, number, number], scale: number, snowAmount: number }) => {
   // Base Cone Args: Radius, Height, Segments
-  const CONE_ARGS: [number, number, number] = [1.5, 2.5, 32];
+  // WIDENED RADIUS from 1.5 to 1.8 for better shelving
+  const CONE_ARGS: [number, number, number] = [1.8, 2.5, 32];
 
   return (
     <group position={position} scale={scale}>
@@ -189,13 +190,24 @@ export const ChristmasTree: React.FC<TreeProps> = ({ snowAmount, onDecorateStart
 
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
-    if (!e.face) return;
+    // Guard clause: Ensure intersection data exists
+    if (!e.face || !e.face.normal || !e.object || !groupRef.current) return;
 
-    if (groupRef.current) {
+    try {
+        // 1. Calculate Local Point
         const localPoint = groupRef.current.worldToLocal(e.point.clone());
-        const normal = e.face.normal.clone().applyQuaternion(groupRef.current.quaternion);
-        localPoint.add(normal.multiplyScalar(0.2));
-        onDecorateStart(localPoint);
+        
+        // 2. Calculate Local Normal
+        const worldNormal = e.face.normal.clone().transformDirection(e.object.matrixWorld).normalize();
+        const localNormal = worldNormal.clone().transformDirection(groupRef.current.matrixWorld.clone().invert()).normalize();
+
+        // 3. Apply Offset to prevent clipping
+        // INCREASED OFFSET TO 0.6 as per bug report (was 0.4)
+        localPoint.add(localNormal.clone().multiplyScalar(0.6));
+        
+        onDecorateStart(localPoint, localNormal);
+    } catch (err) {
+        console.warn("Tree Interaction Error:", err);
     }
   };
 
@@ -206,8 +218,9 @@ export const ChristmasTree: React.FC<TreeProps> = ({ snowAmount, onDecorateStart
 
   const handlePointerMove = (e: any) => {
     e.stopPropagation();
-    if (groupRef.current) {
+    if (groupRef.current && e.point) {
         const localPoint = groupRef.current.worldToLocal(e.point.clone());
+        // Simple visual feedback doesn't need complex normal math
         setHoverPoint(localPoint);
     }
   };
