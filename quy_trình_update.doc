@@ -1,3 +1,4 @@
 dowload
+cd C:\Users\admin\Downloads\cây-thông-noel
 npm run build
 firebase deploy
