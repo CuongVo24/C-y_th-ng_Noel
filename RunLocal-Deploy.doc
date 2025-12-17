@@ -1,3 +1,4 @@
 npm install
 npm run dev
 npm run build && firebase deploy
+npm install -D vite @vitejs/plugin-react
