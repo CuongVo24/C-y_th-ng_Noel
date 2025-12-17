@@ -40,7 +40,16 @@ export interface CeremonyState {
 // Robustly augment JSX.IntrinsicElements for React Three Fiber
 // This ensures all Three.js elements (mesh, group, etc.) are recognized by TypeScript
 // We extend both global JSX and React.JSX to cover diverse environment configurations.
+
 declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
+
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       [elemName: string]: any;
