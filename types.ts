@@ -46,12 +46,3 @@ declare global {
     }
   }
 }
-
-// Additional augmentation for setups where JSX is namespaced under React
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
-  }
-}

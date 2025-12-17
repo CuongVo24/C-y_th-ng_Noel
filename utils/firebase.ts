@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, push, set, remove, query, limitToLast } from 'firebase/database';
+import { getFunctions } from 'firebase/functions';
 import { Decoration } from '../types';
 
 // --- USER CONFIGURATION ---
@@ -17,15 +18,17 @@ const firebaseConfig = {
 // 1. Initialize Firebase
 let app;
 let db: any;
+let functions: any;
 
 try {
   app = initializeApp(firebaseConfig);
   db = getDatabase(app);
+  functions = getFunctions(app); // Initialize Functions
 } catch (error) {
   console.error("Firebase Initialization Error:", error);
 }
 
-export { db };
+export { db, functions };
 
 // 2. Helper Functions
 

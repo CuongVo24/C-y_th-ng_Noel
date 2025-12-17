@@ -20,7 +20,8 @@
     "@react-spring/three": "^10.0.3",
     "firebase": "^12.6.0",
     "@google/generative-ai": "latest",
-    "@google/genai": "^1.33.0"
+    "@google/genai": "^1.33.0",
+    "firebase-functions": "^7.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
